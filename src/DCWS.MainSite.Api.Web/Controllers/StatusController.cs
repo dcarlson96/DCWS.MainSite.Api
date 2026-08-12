@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace DCWS.MainSite.Api.Web.Controllers;
 
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/status")]
 public sealed class StatusController(IStatusService statusService) : ControllerBase
 {
     [HttpGet]
