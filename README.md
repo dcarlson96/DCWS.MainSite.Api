@@ -1,2 +1,2 @@
 # DCWS.MainSite.Api
-APIs for the main site
+APIs for the main site.
