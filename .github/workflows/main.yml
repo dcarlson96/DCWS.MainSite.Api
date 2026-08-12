@@ -1,0 +1,57 @@
+name: Build and deploy DCWS MainSite API
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  AZURE_WEBAPP_NAME: dcwebsystems-api-prod
+  DOTNET_VERSION: '10.0.x'
+  SOLUTION_PATH: DCWS.MainSite.Api.sln
+  WEB_PROJECT_PATH: src/DCWS.MainSite.Api.Web/DCWS.MainSite.Api.Web.csproj
+  TEST_PROJECT_PATH: tests/DCWS.MainSite.Api.Tests/DCWS.MainSite.Api.Tests.csproj
+  PUBLISH_PATH: ./publish
+
+jobs:
+  build-and-deploy:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Restore
+        run: dotnet restore ${{ env.SOLUTION_PATH }}
+
+      - name: Build
+        run: dotnet build ${{ env.SOLUTION_PATH }} --configuration Release --no-restore
+
+      - name: Run tests
+        run: dotnet test ${{ env.TEST_PROJECT_PATH }} --configuration Release --no-build
+
+      - name: Publish Web API
+        run: dotnet publish ${{ env.WEB_PROJECT_PATH }} --configuration Release --no-build --output ${{ env.PUBLISH_PATH }}
+
+      - name: Login to Azure
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Deploy to Azure App Service
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: ${{ env.AZURE_WEBAPP_NAME }}
+          package: ${{ env.PUBLISH_PATH }}
