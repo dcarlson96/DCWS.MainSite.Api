@@ -1,32 +1,27 @@
 using DCWS.MainSite.Api.Domain.Services;
+using Microsoft.Extensions.Configuration;
 
 namespace DCWS.MainSite.Api.Tests.Services;
 
 public sealed class StatusServiceTests
 {
-    private readonly StatusService _service = new();
-
-    [Fact]
-    public void GetStatus_ReturnsNonNullResponse()
+    private static StatusService CreateService(string? connectionString = null)
     {
-        var response = _service.GetStatus();
+        var configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["ConnectionStrings:DefaultConnection"] = connectionString
+            })
+            .Build();
 
-        Assert.NotNull(response);
+        return new StatusService(configuration);
     }
 
     [Fact]
-    public void GetStatus_ReturnsOkStatus()
+    public async Task GetStatusAsync_ThrowsWhenConnectionStringMissing()
     {
-        var response = _service.GetStatus();
+        var service = CreateService(connectionString: null);
 
-        Assert.Equal("OK", response.Status);
-    }
-
-    [Fact]
-    public void GetStatus_ReturnsExpectedMessage()
-    {
-        var response = _service.GetStatus();
-
-        Assert.Equal("DC Web Systems API is running.", response.Message);
+        await Assert.ThrowsAsync<InvalidOperationException>(() => service.GetStatusAsync());
     }
 }

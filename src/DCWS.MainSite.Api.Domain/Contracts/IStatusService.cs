@@ -4,5 +4,5 @@ namespace DCWS.MainSite.Api.Domain.Contracts;
 
 public interface IStatusService
 {
-    StatusResponse GetStatus();
+    Task<StatusResponse> GetStatusAsync(CancellationToken cancellationToken = default);
 }
