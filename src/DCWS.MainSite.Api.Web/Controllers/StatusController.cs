@@ -10,8 +10,9 @@ public sealed class StatusController(IStatusService statusService) : ControllerB
 {
     [HttpGet]
     [ProducesResponseType<StatusResponse>(StatusCodes.Status200OK)]
-    public ActionResult<StatusResponse> GetStatus()
+    public async Task<ActionResult<StatusResponse>> GetStatus(CancellationToken cancellationToken)
     {
-        return Ok(statusService.GetStatus());
+        var status = await statusService.GetStatusAsync(cancellationToken);
+        return Ok(status);
     }
 }
