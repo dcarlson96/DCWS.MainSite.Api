@@ -1,5 +1,8 @@
+using DCWS.MainSite.Api.Domain;
 using DCWS.MainSite.Api.Domain.Contracts;
+using DCWS.MainSite.Api.Domain.Repositories;
 using DCWS.MainSite.Api.Domain.Services;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -20,7 +23,12 @@ builder.Services.AddCors(options =>
     });
 });
 
-builder.Services.AddSingleton<IStatusService, StatusService>();
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")
+        ?? throw new InvalidOperationException("The 'DefaultConnection' connection string is not configured.")));
+
+builder.Services.AddScoped<IStatusRepository, StatusRepository>();
+builder.Services.AddScoped<IStatusService, StatusService>();
 
 var app = builder.Build();
 
