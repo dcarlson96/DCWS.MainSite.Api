@@ -6,11 +6,11 @@ namespace DCWS.MainSite.Api.Domain.Repositories;
 
 public sealed class StatusRepository(AppDbContext context) : IStatusRepository
 {
-    public Task<StatusEntry?> GetLatestAsync(CancellationToken cancellationToken = default)
+    public Task<StatusTest?> GetLatestAsync()
     {
         return context.StatusEntries
             .AsNoTracking()
             .OrderByDescending(x => x.Id)
-            .FirstOrDefaultAsync(cancellationToken);
+            .FirstOrDefaultAsync();
     }
 }

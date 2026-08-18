@@ -5,11 +5,11 @@ namespace DCWS.MainSite.Api.Domain;
 
 public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(options)
 {
-    public DbSet<StatusEntry> StatusEntries => Set<StatusEntry>();
+    public DbSet<StatusTest> StatusEntries => Set<StatusTest>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        modelBuilder.Entity<StatusEntry>(entity =>
+        modelBuilder.Entity<StatusTest>(entity =>
         {
             entity.ToTable("StatusTest", "dbo");
             entity.HasKey(x => x.Id);

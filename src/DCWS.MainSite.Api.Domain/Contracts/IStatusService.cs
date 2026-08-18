@@ -1,8 +1,9 @@
 using DCWS.MainSite.Api.Domain.Models;
+using DCWS.MainSite.Api.Domain.Utilities;
 
 namespace DCWS.MainSite.Api.Domain.Contracts;
 
 public interface IStatusService
 {
-    Task<StatusResponse> GetStatusAsync(CancellationToken cancellationToken = default);
+    Task<ApiResponse<StatusResponse>> GetStatusAsync();
 }
