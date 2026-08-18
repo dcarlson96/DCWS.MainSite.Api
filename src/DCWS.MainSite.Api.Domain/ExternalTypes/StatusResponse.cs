@@ -1,4 +1,4 @@
-namespace DCWS.MainSite.Api.Domain.Models;
+namespace DCWS.MainSite.Api.Domain.ExternalTypes;
 
 public sealed record StatusResponse(
     string Status,

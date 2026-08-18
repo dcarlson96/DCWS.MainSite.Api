@@ -1,4 +1,4 @@
-using DCWS.MainSite.Api.Domain.Models;
+using DCWS.MainSite.Api.Domain.ExternalTypes;
 using DCWS.MainSite.Api.Domain.Utilities;
 
 namespace DCWS.MainSite.Api.Domain.Contracts;

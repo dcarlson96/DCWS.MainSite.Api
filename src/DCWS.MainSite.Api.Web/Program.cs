@@ -1,4 +1,5 @@
 using DCWS.MainSite.Api.Domain;
+using DCWS.MainSite.Api.Domain.Clients;
 using DCWS.MainSite.Api.Domain.Contracts;
 using DCWS.MainSite.Api.Domain.Repositories;
 using DCWS.MainSite.Api.Domain.Services;
@@ -29,6 +30,12 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 
 builder.Services.AddScoped<IStatusRepository, StatusRepository>();
 builder.Services.AddScoped<IStatusService, StatusService>();
+
+builder.Services.AddHttpClient<IUsGeocoderClient, UsGeocoderClient>(client =>
+{
+    client.BaseAddress = new Uri("https://geocoding.geo.census.gov/");
+});
+builder.Services.AddScoped<IAddressService, AddressService>();
 
 var app = builder.Build();
 
