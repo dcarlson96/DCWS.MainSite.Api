@@ -6,9 +6,9 @@ namespace DCWS.MainSite.Api.Tests.Services;
 
 public sealed class StatusServiceTests
 {
-    private sealed class FakeStatusRepository(StatusEntry? entry) : IStatusRepository
+    private sealed class FakeStatusRepository(StatusTest? entry) : IStatusRepository
     {
-        public Task<StatusEntry?> GetLatestAsync(CancellationToken cancellationToken = default)
+        public Task<StatusTest?> GetLatestAsync()
         {
             return Task.FromResult(entry);
         }
@@ -18,7 +18,7 @@ public sealed class StatusServiceTests
     public async Task GetStatusAsync_ReturnsMappedResponse_WhenEntryExists()
     {
         var createdDateUtc = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc);
-        var repository = new FakeStatusRepository(new StatusEntry
+        var repository = new FakeStatusRepository(new StatusTest
         {
             Id = 42,
             Message = "hello",
@@ -28,11 +28,13 @@ public sealed class StatusServiceTests
 
         var result = await service.GetStatusAsync();
 
-        Assert.Equal("ok", result.Status);
-        Assert.Equal("connected", result.Database);
-        Assert.Equal(42, result.Id);
-        Assert.Equal("hello", result.Message);
-        Assert.Equal(new DateTimeOffset(createdDateUtc, TimeSpan.Zero), result.CreatedDateUtc);
+        Assert.True(result.WasSuccessful);
+        Assert.NotNull(result.Item);
+        Assert.Equal("ok", result.Item!.Status);
+        Assert.Equal("connected", result.Item.Database);
+        Assert.Equal(42, result.Item.Id);
+        Assert.Equal("hello", result.Item.Message);
+        Assert.Equal(new DateTimeOffset(createdDateUtc, TimeSpan.Zero), result.Item.CreatedDateUtc);
     }
 
     [Fact]
@@ -43,10 +45,12 @@ public sealed class StatusServiceTests
 
         var result = await service.GetStatusAsync();
 
-        Assert.Equal("ok", result.Status);
-        Assert.Equal("connected", result.Database);
-        Assert.Null(result.Id);
-        Assert.Equal("No status record found.", result.Message);
-        Assert.Null(result.CreatedDateUtc);
+        Assert.True(result.WasSuccessful);
+        Assert.NotNull(result.Item);
+        Assert.Equal("ok", result.Item!.Status);
+        Assert.Equal("connected", result.Item.Database);
+        Assert.Null(result.Item.Id);
+        Assert.Equal("No status record found.", result.Item.Message);
+        Assert.Null(result.Item.CreatedDateUtc);
     }
 }

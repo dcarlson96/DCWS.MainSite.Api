@@ -1,6 +1,6 @@
 namespace DCWS.MainSite.Api.Domain.Models;
 
-public sealed class StatusEntry
+public sealed class StatusTest
 {
     public int Id { get; set; }
 
