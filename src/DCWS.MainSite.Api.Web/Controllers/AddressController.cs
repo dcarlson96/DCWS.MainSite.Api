@@ -1,7 +1,6 @@
 using DCWS.MainSite.Api.Domain.Contracts;
 using DCWS.MainSite.Api.Domain.ExternalTypes;
 using DCWS.MainSite.Api.Domain.Utilities;
-using DCWS.MainSite.Api.Domain.VendorTypes;
 using Microsoft.AspNetCore.Mvc;
 
 namespace DCWS.MainSite.Api.Web.Controllers;

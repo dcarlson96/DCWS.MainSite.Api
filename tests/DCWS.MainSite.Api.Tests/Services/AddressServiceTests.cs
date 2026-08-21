@@ -1,4 +1,4 @@
-using DCWS.MainSite.Api.Domain.Clients;
+using System.Text.Json;
 using DCWS.MainSite.Api.Domain.Contracts;
 using DCWS.MainSite.Api.Domain.ExternalTypes;
 using DCWS.MainSite.Api.Domain.Services;
@@ -39,7 +39,15 @@ public sealed class AddressServiceTests
                     new UsGeocoderAddressMatch
                     {
                         MatchedAddress = "150 N CAPITOL BLVD, BOISE, ID, 83702",
-                        Coordinates = new UsGeocoderCoordinates { X = -116.202, Y = 43.615 }
+                        Coordinates = new UsGeocoderCoordinates { X = -116.202, Y = 43.615 },
+                        Geographies = new Dictionary<string, List<UsGeocoderGeography>>
+                        {
+                            ["States"] = [new UsGeocoderGeography { Name = "Idaho" }],
+                            ["Counties"] = [new UsGeocoderGeography { Name = "Ada County" }],
+                            ["119th Congressional Districts"] = [CreateGeography("Congressional District 2", "CD119", "02")],
+                            ["2024 State Legislative Districts - Upper"] = [new UsGeocoderGeography { Name = "State Senate District 17", StateLegislativeDistrictUpper = "017" }],
+                            ["2024 State Legislative Districts - Lower"] = [new UsGeocoderGeography { Name = "State House District 17", StateLegislativeDistrictLower = "017" }]
+                        }
                     }
                 ]
             }
@@ -55,6 +63,11 @@ public sealed class AddressServiceTests
         Assert.Equal("150 N CAPITOL BLVD, BOISE, ID, 83702", result.Item!.MatchedAddress);
         Assert.Equal(43.615, result.Item.Latitude);
         Assert.Equal(-116.202, result.Item.Longitude);
+        Assert.Equal("Idaho", result.Item.State);
+        Assert.Equal("Ada County", result.Item.County);
+        Assert.Equal("02", result.Item.CongressionalDistrict);
+        Assert.Equal("017", result.Item.StateSenateDistrict);
+        Assert.Equal("017", result.Item.StateHouseDistrict);
     }
 
     [Fact]
@@ -76,6 +89,74 @@ public sealed class AddressServiceTests
         Assert.False(result.WasSuccessful);
         Assert.Equal("No matching address was found.", result.Message);
         Assert.Null(result.Item);
+    }
+
+    [Fact]
+    public async Task LookupAsync_ReturnsNullGeographyValues_WhenGeographiesMissing()
+    {
+        var geocoderResponse = new UsGeocoderResponse
+        {
+            Result = new UsGeocoderResult
+            {
+                AddressMatches =
+                [
+                    new UsGeocoderAddressMatch
+                    {
+                        MatchedAddress = "150 N CAPITOL BLVD, BOISE, ID, 83702",
+                        Coordinates = new UsGeocoderCoordinates { X = -116.202, Y = 43.615 },
+                        Geographies = null
+                    }
+                ]
+            }
+        };
+        var client = new FakeUsGeocoderClient(geocoderResponse);
+        var service = new AddressService(client);
+
+        var result = await service.LookupAsync(ValidRequest());
+
+        Assert.True(result.WasSuccessful);
+        Assert.NotNull(result.Item);
+        Assert.Null(result.Item!.County);
+        Assert.Null(result.Item.State);
+        Assert.Null(result.Item.CongressionalDistrict);
+        Assert.Null(result.Item.StateHouseDistrict);
+        Assert.Null(result.Item.StateSenateDistrict);
+    }
+
+    [Fact]
+    public async Task LookupAsync_MapsCongressionalDistrict_ForDifferentSessionNumber()
+    {
+        var geocoderResponse = new UsGeocoderResponse
+        {
+            Result = new UsGeocoderResult
+            {
+                AddressMatches =
+                [
+                    new UsGeocoderAddressMatch
+                    {
+                        MatchedAddress = "150 N CAPITOL BLVD, BOISE, ID, 83702",
+                        Coordinates = new UsGeocoderCoordinates { X = -116.202, Y = 43.615 },
+                        Geographies = new Dictionary<string, List<UsGeocoderGeography>>
+                        {
+                            ["120th Congressional Districts"] = [CreateGeography("Congressional District 2", "CD120", "02")]
+                        }
+                    }
+                ]
+            }
+        };
+        var client = new FakeUsGeocoderClient(geocoderResponse);
+        var service = new AddressService(client);
+
+        var result = await service.LookupAsync(ValidRequest());
+
+        Assert.True(result.WasSuccessful);
+        Assert.Equal("02", result.Item!.CongressionalDistrict);
+    }
+
+    private static UsGeocoderGeography CreateGeography(string name, string congressionalDistrictPropertyName, string congressionalDistrictValue)
+    {
+        var json = $$"""{"NAME":"{{name}}","{{congressionalDistrictPropertyName}}":"{{congressionalDistrictValue}}"}""";
+        return JsonSerializer.Deserialize<UsGeocoderGeography>(json)!;
     }
 
     [Theory]

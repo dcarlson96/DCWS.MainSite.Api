@@ -34,6 +34,8 @@ public sealed class AddressService(IUsGeocoderClient usGeocoderClient) : IAddres
             };
         }
 
+        var geographies = match.Geographies;
+
         return new ApiResponse<AddressLookupResponse>
         {
             WasSuccessful = true,
@@ -41,9 +43,34 @@ public sealed class AddressService(IUsGeocoderClient usGeocoderClient) : IAddres
             {
                 MatchedAddress = match.MatchedAddress,
                 Latitude = match.Coordinates?.Y,
-                Longitude = match.Coordinates?.X
+                Longitude = match.Coordinates?.X,
+                County = GetGeography(geographies, key => key.Equals("Counties", StringComparison.OrdinalIgnoreCase))?.Name,
+                State = GetGeography(geographies, key => key.Equals("States", StringComparison.OrdinalIgnoreCase))?.Name,
+                CongressionalDistrict = GetGeography(geographies, key => key.EndsWith("Congressional Districts", StringComparison.OrdinalIgnoreCase))?.GetCongressionalDistrict(),
+                StateHouseDistrict = GetGeography(geographies, key => key.Contains("State Legislative Districts - Lower", StringComparison.OrdinalIgnoreCase))?.StateLegislativeDistrictLower,
+                StateSenateDistrict = GetGeography(geographies, key => key.Contains("State Legislative Districts - Upper", StringComparison.OrdinalIgnoreCase))?.StateLegislativeDistrictUpper
             }
         };
+    }
+
+    private static UsGeocoderGeography? GetGeography(
+        Dictionary<string, List<UsGeocoderGeography>>? geographies,
+        Func<string, bool> keyPredicate)
+    {
+        if (geographies is null)
+        {
+            return null;
+        }
+
+        foreach (var (key, value) in geographies)
+        {
+            if (keyPredicate(key))
+            {
+                return value.FirstOrDefault();
+            }
+        }
+
+        return null;
     }
 
     private static List<ValidationIssue> Validate(AddressLookupRequest request)
