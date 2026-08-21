@@ -3,7 +3,7 @@ using DCWS.MainSite.Api.Domain.Utilities;
 
 namespace DCWS.MainSite.Api.Domain.Contracts;
 
-public interface IStatusService
+public interface IAddressService
 {
-    Task<ApiResponse<StatusResponse>> GetStatusAsync();
+    Task<ApiResponse<AddressLookupResponse>> LookupAsync(AddressLookupRequest request);
 }
