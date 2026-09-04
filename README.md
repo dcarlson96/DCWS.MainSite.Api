@@ -67,6 +67,29 @@ The generated OpenAPI document is available at:
 
 `https://localhost:7194/swagger/v1/swagger.json`
 
+## Testimonial email configuration
+
+`POST /api/testimonials` validates public testimonial submissions and emails them
+for manual review. It does not read from or write to the database. Configure these
+values with user secrets locally or Azure App Service application settings:
+
+| Setting | Purpose |
+| --- | --- |
+| `Testimonials__NotificationEmail` | Review destination (defaults to `dylan@dcwebsystems.com`) |
+| `Smtp__Host` | SMTP server host |
+| `Smtp__Port` | SMTP server port (defaults to `587`) |
+| `Smtp__UseStartTls` | Whether STARTTLS is required (defaults to `true`) |
+| `Smtp__Username` | SMTP username, when authentication is required |
+| `Smtp__Password` | SMTP password or provider-issued secret |
+| `Smtp__FromAddress` | Verified sender address |
+| `Smtp__FromName` | Sender display name |
+
+Configure these values for a transactional SMTP provider and keep its credentials
+out of `appsettings*.json` and source control. Microsoft 365 no longer supports
+password-based SMTP AUTH; using it directly would require a separate OAuth-capable
+`IEmailService` implementation. The endpoint is limited to five attempts per
+source IP per hour and also includes a honeypot field.
+
 ## Status endpoint
 
 Request:
