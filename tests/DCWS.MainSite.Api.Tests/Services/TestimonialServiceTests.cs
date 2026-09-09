@@ -23,6 +23,7 @@ public sealed class TestimonialServiceTests
         var result = await service.SubmitAsync(new TestimonialSubmitRequest
         {
             Name = "  Jane Doe  ",
+            Organization = "  Acme Consulting  ",
             Review = "  Dylan was fantastic to work with.  "
         });
 
@@ -33,8 +34,27 @@ public sealed class TestimonialServiceTests
         Assert.Equal("dylan@dcwebsystems.com", message.Recipient);
         Assert.Equal("New DC Web Systems Testimonial Submission", message.Subject);
         Assert.Contains("Jane Doe", message.HtmlBody);
+        Assert.Contains("Acme Consulting", message.HtmlBody);
         Assert.Contains("Dylan was fantastic to work with.", message.HtmlBody);
+        Assert.Contains("Organization:\nAcme Consulting", message.TextBody);
         Assert.Contains("September 4, 2026 at 6:00 PM UTC", message.HtmlBody);
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("   ")]
+    public async Task SubmitAsync_RejectsMissingOrWhitespaceOrganization(string? organization)
+    {
+        var emailService = new FakeEmailService();
+        var service = CreateService(emailService);
+        var request = ValidRequest();
+        request.Organization = organization;
+
+        var result = await service.SubmitAsync(request);
+
+        AssertValidationFailure(result, "Organization", "Organization is required.");
+        Assert.Empty(emailService.Messages);
     }
 
     [Theory]
@@ -100,6 +120,21 @@ public sealed class TestimonialServiceTests
     }
 
     [Fact]
+    public async Task SubmitAsync_RejectsOrganizationOverMaximumLength()
+    {
+        var service = CreateService(new FakeEmailService());
+        var request = ValidRequest();
+        request.Organization = new string('o', TestimonialService.OrganizationMaximumLength + 1);
+
+        var result = await service.SubmitAsync(request);
+
+        AssertValidationFailure(
+            result,
+            "Organization",
+            $"Organization cannot exceed {TestimonialService.OrganizationMaximumLength} characters.");
+    }
+
+    [Fact]
     public async Task SubmitAsync_ReturnsFriendlyFailure_WhenEmailServiceFails()
     {
         var service = CreateService(new FakeEmailService(exception: new InvalidOperationException("SMTP unavailable")));
@@ -121,6 +156,7 @@ public sealed class TestimonialServiceTests
         await service.SubmitAsync(new TestimonialSubmitRequest
         {
             Name = "<strong>Jane</strong>",
+            Organization = "<em>Acme</em>",
             Review = "Great work <script>alert('x')</script>"
         });
 
@@ -128,6 +164,7 @@ public sealed class TestimonialServiceTests
         Assert.DoesNotContain("<script>", message.HtmlBody);
         Assert.Contains("&lt;script&gt;", message.HtmlBody);
         Assert.Contains("&lt;strong&gt;Jane&lt;/strong&gt;", message.HtmlBody);
+        Assert.Contains("&lt;em&gt;Acme&lt;/em&gt;", message.HtmlBody);
     }
 
     private static TestimonialService CreateService(IEmailService emailService)
@@ -145,6 +182,7 @@ public sealed class TestimonialServiceTests
     private static TestimonialSubmitRequest ValidRequest() => new()
     {
         Name = "Jane Doe",
+        Organization = "Acme Consulting",
         Review = "Dylan was fantastic to work with."
     };
 

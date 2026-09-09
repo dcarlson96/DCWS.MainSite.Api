@@ -17,6 +17,7 @@ public sealed class TestimonialService(
     ILogger<TestimonialService> logger) : ITestimonialService
 {
     public const int NameMaximumLength = 100;
+    public const int OrganizationMaximumLength = 100;
     public const int ReviewMaximumLength = 2000;
 
     public async Task<ApiResponse<TestimonialSubmitResponse>> SubmitAsync(
@@ -46,9 +47,10 @@ public sealed class TestimonialService(
         }
 
         var name = request.Name!.Trim();
+        var organization = request.Organization!.Trim();
         var review = request.Review!.Trim();
         var submittedUtc = timeProvider.GetUtcNow();
-        var message = CreateMessage(notificationEmail, name, review, submittedUtc);
+        var message = CreateMessage(notificationEmail, name, organization, review, submittedUtc);
 
         try
         {
@@ -69,10 +71,12 @@ public sealed class TestimonialService(
     private static EmailMessage CreateMessage(
         string recipient,
         string name,
+        string organization,
         string review,
         DateTimeOffset submittedUtc)
     {
         var encodedName = WebUtility.HtmlEncode(name);
+        var encodedOrganization = WebUtility.HtmlEncode(organization);
         var encodedReview = WebUtility.HtmlEncode(review)
             .Replace("\r\n", "<br />", StringComparison.Ordinal)
             .Replace("\n", "<br />", StringComparison.Ordinal);
@@ -86,6 +90,7 @@ public sealed class TestimonialService(
             $"""
              <p>A new testimonial has been submitted through dcwebsystems.com.</p>
              <p><strong>Name:</strong><br />{encodedName}</p>
+             <p><strong>Organization:</strong><br />{encodedOrganization}</p>
              <p><strong>Review:</strong><br />{encodedReview}</p>
              <p><strong>Submitted:</strong><br />{submittedDisplay}</p>
              """,
@@ -94,6 +99,9 @@ public sealed class TestimonialService(
 
              Name:
              {name}
+
+             Organization:
+             {organization}
 
              Review:
              {review}
@@ -121,6 +129,23 @@ public sealed class TestimonialService(
             {
                 Property = nameof(request.Name),
                 Issue = $"Name cannot exceed {NameMaximumLength} characters."
+            });
+        }
+
+        if (string.IsNullOrWhiteSpace(request.Organization))
+        {
+            issues.Add(new ValidationIssue
+            {
+                Property = nameof(request.Organization),
+                Issue = "Organization is required."
+            });
+        }
+        else if (request.Organization.Length > OrganizationMaximumLength)
+        {
+            issues.Add(new ValidationIssue
+            {
+                Property = nameof(request.Organization),
+                Issue = $"Organization cannot exceed {OrganizationMaximumLength} characters."
             });
         }
 
