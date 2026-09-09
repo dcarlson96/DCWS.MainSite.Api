@@ -21,7 +21,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\DCWS.MainSite.Api.Domain\DCWS.MainSite.Api.Domain.csproj" />
+    <ProjectReference Include="..\..\src\DCWS.MainSite.Api.Web\DCWS.MainSite.Api.Web.csproj" />
   </ItemGroup>
 
   <ItemGroup>

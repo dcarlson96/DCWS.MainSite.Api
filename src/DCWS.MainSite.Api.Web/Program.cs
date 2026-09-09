@@ -9,6 +9,7 @@ using DCWS.MainSite.Api.Web.Configuration;
 using DCWS.MainSite.Api.Web.Services;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -18,8 +19,10 @@ builder.Services.AddSwaggerGen();
 
 builder.Services.Configure<TestimonialsOptions>(
     builder.Configuration.GetSection(TestimonialsOptions.SectionName));
-builder.Services.Configure<SmtpOptions>(
-    builder.Configuration.GetSection(SmtpOptions.SectionName));
+builder.Services.AddSingleton<IValidateOptions<SmtpOptions>, SmtpOptionsValidator>();
+builder.Services.AddOptions<SmtpOptions>()
+    .Bind(builder.Configuration.GetSection(SmtpOptions.SectionName))
+    .ValidateOnStart();
 builder.Services.AddSingleton(TimeProvider.System);
 
 builder.Services.AddCors(options =>
