@@ -67,6 +67,31 @@ The generated OpenAPI document is available at:
 
 `https://localhost:7194/swagger/v1/swagger.json`
 
+## Testimonial email configuration
+
+`POST /api/testimonials` validates public testimonial submissions and emails them
+for manual review. It does not read from or write to the database. Configure these
+values with user secrets locally or Azure App Service application settings:
+
+| Setting | Purpose |
+| --- | --- |
+| `Testimonials__NotificationEmail` | Review destination (defaults to `dylan@dcwebsystems.com`) |
+| `Smtp__Host` | SMTP server host |
+| `Smtp__Port` | SMTP server port (defaults to `587`) |
+| `Smtp__UseStartTls` | Require STARTTLS (must be `true` for Microsoft 365 SMTP) |
+| `Smtp__TenantId` | Microsoft Entra tenant ID |
+| `Smtp__ClientId` | Microsoft Entra application (client) ID |
+| `Smtp__ClientSecret` | Microsoft Entra application client secret |
+| `Smtp__Username` | Microsoft 365 sending mailbox identity |
+| `Smtp__FromAddress` | Verified sender address |
+| `Smtp__FromName` | Sender display name |
+
+The email service obtains an app-only OAuth 2.0 token for
+`https://outlook.office365.com/.default` and authenticates to Microsoft 365 SMTP
+with XOAUTH2. Keep the client secret out of `appsettings*.json` and source control.
+The endpoint is limited to five attempts per source IP per hour and also includes
+a honeypot field.
+
 ## Status endpoint
 
 Request:

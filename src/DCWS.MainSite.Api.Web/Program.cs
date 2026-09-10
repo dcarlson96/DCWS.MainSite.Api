@@ -1,9 +1,15 @@
+using System.Threading.RateLimiting;
 using DCWS.MainSite.Api.Domain;
 using DCWS.MainSite.Api.Domain.Clients;
+using DCWS.MainSite.Api.Domain.Configuration;
 using DCWS.MainSite.Api.Domain.Contracts;
 using DCWS.MainSite.Api.Domain.Repositories;
 using DCWS.MainSite.Api.Domain.Services;
+using DCWS.MainSite.Api.Web.Configuration;
+using DCWS.MainSite.Api.Web.Services;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -11,17 +17,40 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+builder.Services.Configure<TestimonialsOptions>(
+    builder.Configuration.GetSection(TestimonialsOptions.SectionName));
+builder.Services.AddSingleton<IValidateOptions<SmtpOptions>, SmtpOptionsValidator>();
+builder.Services.AddOptions<SmtpOptions>()
+    .Bind(builder.Configuration.GetSection(SmtpOptions.SectionName))
+    .ValidateOnStart();
+builder.Services.AddSingleton(TimeProvider.System);
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("MainSite", policy =>
     {
         policy
-            .WithOrigins(
-                "https://dcwebsystems.com",
-                "https://www.dcwebsystems.com")
+            .WithOrigins(builder.Configuration
+                .GetSection("Cors:AllowedOrigins")
+                .Get<string[]>() ?? [])
             .AllowAnyHeader()
             .AllowAnyMethod();
     });
+});
+
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    options.AddPolicy("TestimonialSubmission", context =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 5,
+                Window = TimeSpan.FromHours(1),
+                QueueLimit = 0,
+                AutoReplenishment = true
+            }));
 });
 
 builder.Services.AddDbContext<AppDbContext>(options =>
@@ -36,6 +65,8 @@ builder.Services.AddHttpClient<IUsGeocoderClient, UsGeocoderClient>(client =>
     client.BaseAddress = new Uri("https://geocoding.geo.census.gov/");
 });
 builder.Services.AddScoped<IAddressService, AddressService>();
+builder.Services.AddScoped<IEmailService, SmtpEmailService>();
+builder.Services.AddScoped<ITestimonialService, TestimonialService>();
 
 var app = builder.Build();
 
@@ -48,6 +79,7 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 
 app.UseCors("MainSite");
+app.UseRateLimiter();
 
 app.MapControllers();
 
