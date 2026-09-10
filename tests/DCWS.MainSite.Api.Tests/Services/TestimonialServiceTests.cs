@@ -36,7 +36,7 @@ public sealed class TestimonialServiceTests
         Assert.Contains("Jane Doe", message.HtmlBody);
         Assert.Contains("Acme Consulting", message.HtmlBody);
         Assert.Contains("Dylan was fantastic to work with.", message.HtmlBody);
-        Assert.Contains("Organization:\nAcme Consulting", message.TextBody);
+        Assert.Contains("Organization:\r\nAcme Consulting", message.TextBody);
         Assert.Contains("September 4, 2026 at 6:00 PM UTC", message.HtmlBody);
     }
 
