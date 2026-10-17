@@ -1,0 +1,18 @@
+name: dcws-mainsite-api-preview
+region: nyc
+services:
+  - name: api
+    github:
+      repo: dcarlson96/DCWS.MainSite.Api
+      branch: feature/digitalocean-migration
+      deploy_on_push: false
+    dockerfile_path: Dockerfile
+    http_port: 8080
+    health_check:
+      http_path: /health/live
+      initial_delay_seconds: 20
+      period_seconds: 10
+    envs:
+      - key: ASPNETCORE_ENVIRONMENT
+        value: Production
+        scope: RUN_TIME

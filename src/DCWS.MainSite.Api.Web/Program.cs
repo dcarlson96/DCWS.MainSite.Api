@@ -81,6 +81,7 @@ app.UseHttpsRedirection();
 app.UseCors("MainSite");
 app.UseRateLimiter();
 
+app.MapGet("/health/live", () => Results.Ok(new { status = "ok" }));
 app.MapControllers();
 
 app.Run();

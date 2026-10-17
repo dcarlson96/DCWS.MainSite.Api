@@ -1,0 +1,33 @@
+name: Verify Docker image
+
+on:
+  push:
+    branches:
+      - feature/digitalocean-migration
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  container:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build image
+        run: docker build -t dcws-api:test .
+      - name: Smoke test published API
+        shell: bash
+        run: |
+          docker run -d --name dcws-api-test -p 127.0.0.1:8080:8080 \
+            -e ConnectionStrings__DefaultConnection='Server=localhost;Database=test;User Id=test;Password=test;Encrypt=True;TrustServerCertificate=False' \
+            -e Smtp__TenantId=test -e Smtp__ClientId=test -e Smtp__ClientSecret=test \
+            dcws-api:test
+          trap 'docker rm -f dcws-api-test >/dev/null 2>&1 || true' EXIT
+          for attempt in {1..30}; do
+            if curl --fail --silent http://127.0.0.1:8080/health/live >/tmp/health.json; then break; fi
+            sleep 2
+          done
+          grep --quiet '"status":"ok"' /tmp/health.json
