@@ -16,6 +16,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - name: Run API tests
+        run: dotnet test DCWS.MainSite.Api.sln --configuration Release
       - name: Build image
         run: docker build -t dcws-api:test .
       - name: Smoke test published API
