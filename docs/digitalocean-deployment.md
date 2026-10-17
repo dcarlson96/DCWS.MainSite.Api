@@ -25,3 +25,5 @@ Set actual values in DigitalOcean runtime environment settings, marking credenti
 The API has a database-independent `/health/live` endpoint for platform health checks. `/api/status/get` remains the database check and should be tested separately with real settings. The existing SQL Server database is not migrated by this branch. Confirm connectivity, firewall rules, TLS, and credentials before deploying. The SMTP options validator requires nonempty credentials at startup.
 
 App Platform terminates TLS and forwards HTTP to port 8080. Before exposing the API publicly, verify HTTPS handling and client IP rate limits behind the platform proxy. The current rate limiter uses `RemoteIpAddress`; proxy behavior can cause multiple visitors to share a limit. Do not trust arbitrary forwarded IP headers without a verified proxy boundary. Keep Azure deployment and production DNS in place during preview testing.
+
+Security review: MailKit is updated to 4.18.1 and the transitive PKCS package is pinned to patched 10.0.13. Keep rebuilding against patched .NET 10 base images. The unit suite runs on Linux in branch CI.
